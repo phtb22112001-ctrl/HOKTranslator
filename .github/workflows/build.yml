@@ -25,17 +25,49 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build APK
+      - name: Build Release APK
         run: gradle assembleRelease
 
-      - name: Find APK
+      - name: Create signing key
         run: |
-          echo "APK files:"
+          keytool -genkeypair \
+            -v \
+            -keystore release.keystore \
+            -alias hoktranslator \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=HOK Translator, OU=App, O=HOK, L=Vietnam, S=Vietnam, C=VN"
+
+      - name: Find unsigned APK
+        run: |
           find app/build/outputs -type f -name "*.apk" -print
 
-      - name: Upload APK
+      - name: Sign APK
+        run: |
+          APK=$(find app/build/outputs/apk/release -type f -name "*.apk" | head -1)
+          echo "Signing: $APK"
+
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+
+          "$APKSIGNER" sign \
+            --ks release.keystore \
+            --ks-key-alias hoktranslator \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out HOK-Translator.apk \
+            "$APK"
+
+      - name: Verify APK
+        run: |
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --verbose HOK-Translator.apk
+
+      - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
           name: HOKTranslator-APK
-          path: app/build/outputs/**/*.apk
+          path: HOK-Translator.apk
           if-no-files-found: error
