@@ -18,7 +18,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:text="Dịch màn hình Honor of Kings ACE"
+        android:text="Dịch tiếng Trung → tiếng Việt trên màn hình"
         android:textSize="16sp"/>
 
     <Button
